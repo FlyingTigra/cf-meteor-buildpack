@@ -1,4 +1,5 @@
-FORKED FROM https://github.com/cloudfoundry-community/cf-meteor-buildpack TO SUPPORT MIGRATION OF METEOR 1.4.x TO NODE 4.4.7
+FORKED FROM https://github.com/cloudfoundry-community/cf-meteor-buildpack
+NOW WORKING WITH METEOR 1.8, NODE 8.11.x and have more debugging info.
 
 Cloud Foundry Meteor Buildpack
 ==============================
