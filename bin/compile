@@ -14,10 +14,23 @@ indent() {
 }
 
 status() {
-  echo "-----> $*"
+  echo " "
+  echo "`date`  ----->  $*"
+  # echo "du -kh /tmp"
+  # du -kh --max-depth=2 /home/vcap/.meteor/packages
+  # du -kh --max-depth=2 /home/vcap/.meteor/packages_metadata
+  # du -kh --max-depth=2 /tmp/app
+  echo "---------"
+  echo "df -kh"
+  df -kh
+  echo "---------"
+  echo "free -m"
+  free -m
+  echo "---------"
+  echo " "
 }
 
-node_version=$(curl --silent --get https://semver.io/node/resolve/4.4.x)
+node_version=$(curl --silent --get https://semver.io/node/resolve/8.8.x)
 
 install_node() {
   if [ -f "$BUILD_DIR/.vendor/node/bin/node" ] ; then
@@ -50,7 +63,7 @@ install_meteor() {
   # curl https://install.meteor.com | sh
   status "Downloading Meteor install script"
   METEOR_INSTALL_SCRIPT=install_meteor.sh
-  curl https://install.meteor.com/ > $METEOR_INSTALL_SCRIPT
+  curl https://install.meteor.com?release=1.8 > $METEOR_INSTALL_SCRIPT 
 
   status "Installing Meteor connected to $MONGO_URL"
   sed -e '/^#!\/bin\/sh/ s/$/ -x/' \
@@ -71,9 +84,27 @@ build() {
   (
     cd $BUILD_DIR
     status "Building meteor bundle"
-    meteor build --debug --directory deploy --server http://localhost:3000
+    meteor --version
+    
+    status "NPM Prune"
+    meteor npm prune --production
+    
+    status "NPM Install"
+    meteor npm install
+        
+    status "Meteor Build"
+    meteor add force-ssl
+    METEOR_DEBUG_BUILD=1 meteor build --directory deploy --server http://localhost:3000
+    
+    rm -rf /home/vcap/.meteor/packages/standard-minifier-js
+    rm -rf /home/vcap/.meteor/packages/standard-minifier-css
+    rm -rf /home/vcap/.meteor/packages/minifier-css
+    status "Cleaned up a little"
+    
+    
+    status "NPM install 2"
     cd deploy/bundle/programs/server
-    status "Installing npm dependencies"
+    pwd
     npm install 2>&1 | indent
     mv $BUILD_DIR/.vendor $BUILD_DIR/vendor
   )
@@ -81,6 +112,9 @@ build() {
 
 [ ! -d $BUILD_DIR ] && mkdir $BUILD_DIR
 [ ! -d $CACHE_DIR ] && mkdir $CACHE_DIR
+
+echo "BUILD_DIR = $BUILD_DIR"
+echo "CACHE_DIR = $CACHE_DIR"
 
 install_node
 install_meteor
